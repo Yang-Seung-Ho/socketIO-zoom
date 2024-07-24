@@ -24,9 +24,25 @@ wsServer.on("connection", (socket) => {
         socket.join(roomName);
         done;
         socket.to(roomName).emit("welcome");
-      });
+    });
+    // 끊어지기 전에 메시지 전송 가능
+    socket.on("disconnecting", () => {
+      socket.rooms.forEach(room => socket.to(room).emit("bye"));
+    });
+
+    // 메시지 받기
+    socket.on("new_message", (msg, room, done)=> {
+      socket.to(room).emit("new_message", msg);
+      done();
+    })
 });
   
+
+
+
+
+
+
 
 
 // 웹 소켓 사용
