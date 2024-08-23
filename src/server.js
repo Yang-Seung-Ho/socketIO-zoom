@@ -15,26 +15,54 @@ const handleListen = () => console.log(`Listening on http://localhost:3000`);
 const httpServer = http.createServer(app);
 const wsServer = SocketIO(httpServer);
 
+function publicRooms() {
+  const { rooms, sids } = wsServer.sockets.adapter;
+  const publicRooms = [];
+  rooms.forEach((_, key) => {
+    if(sids.get(key) === undefined) {
+      publicRooms.push(key);
+    }
+  });
+  return publicRooms;
+}
+function countRoom(roomName){
+  return wsServer.sockets.adapter.rooms.get(roomName)?.size;
+}
+
+
 // socket.io 사용
 wsServer.on("connection", (socket) => {
+    socket.nickname = '익명'
     socket.onAny((event) => {
         console.log(`Socket Event: ${event}`);
       });
-    socket.on("enter_room", (roomName, done) => {
+    socket.on("enter_room", (roomName, nickName, done) => {
         socket.join(roomName);
-        done;
-        socket.to(roomName).emit("welcome");
-    });
-    // 끊어지기 전에 메시지 전송 가능
-    socket.on("disconnecting", () => {
-      socket.rooms.forEach(room => socket.to(room).emit("bye"));
+        socket["nickname"] = nickName;
+        const userCount = countRoom(roomName);
+        console.log(userCount);
+
+        done(userCount);
+        socket.to(roomName).emit("welcome", socket.nickname, countRoom(roomName));
+        wsServer.sockets.emit("room_change", publicRooms());
     });
 
+    // 끊어지기 전에 메시지 전송 가능
+    socket.on("disconnecting", () => {
+      socket.rooms.forEach(room => socket.to(room).emit("bye", socket.nickname, countRoom(room) - 1));
+      wsServer.sockets.emit("room_change", publicRooms());
+    });
+
+    socket.on("disconnect", () => {  
+      wsServer.sockets.emit("room_change", publicRooms());
+    });
     // 메시지 받기
     socket.on("new_message", (msg, room, done)=> {
-      socket.to(room).emit("new_message", msg);
+      socket.to(room).emit("new_message", `${socket.nickname}:${msg}`);
       done();
     })
+
+    //socket.on("nickname", (nickname) => (socket["nickname"] = nickname));
 });
   
 
