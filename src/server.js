@@ -2,6 +2,8 @@ import express from "express"
 import http from "http"
 //import WebSocket from "ws"
 import SocketIO from "socket.io";
+const { instrument } = require("@socket.io/admin-ui");
+const { Server } = require("socket.io");
 
 const app = express();
 
@@ -13,7 +15,16 @@ app.get("/", (req, res) => res.render("home"));
 const handleListen = () => console.log(`Listening on http://localhost:3000`);
 
 const httpServer = http.createServer(app);
-const wsServer = SocketIO(httpServer);
+const wsServer = new Server(httpServer, {
+  cors: {
+    origin: ["https://admin.socket.io"],
+    credentials: true
+  }
+});
+instrument(wsServer, {
+  auth: false,
+  mode: "development",
+});
 
 function publicRooms() {
   const { rooms, sids } = wsServer.sockets.adapter;
