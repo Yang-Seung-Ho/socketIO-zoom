@@ -14,7 +14,7 @@ let myStream;
 let muted = false;
 let cameraOff = false;
 let roomName;
-
+let myPeerConnection;
 
 async function getCameras(){
     try {
@@ -94,10 +94,11 @@ camerasSelect.addEventListener("input", handleCameraChange)
 const welcome = document.getElementById("welcome");
 const welcomeForm = welcome.querySelector("form");
 
-function startMedia() {
+async function startMedia() {
     welcome.hidden = true;
     call.hidden = false;
-    getMedia();
+    await getMedia();
+    makeConnection();
 }
 
 function handleWelcomeSubmit(event) {
@@ -116,3 +117,9 @@ socket.on("welcome", () => {
     console.log("누군가 입장");
     
 })
+
+//RTC Code
+
+function makeConnection() {
+    const peerConnection = new RTCPeerConnection();
+}
