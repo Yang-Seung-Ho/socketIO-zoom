@@ -113,13 +113,22 @@ welcomeForm.addEventListener("submit", handleWelcomeSubmit);
 
 // Socket code
 
-socket.on("welcome", () => {
-    console.log("누군가 입장");
-    
+socket.on("welcome", async () => {
+    const offer = await myPeerConnection.createOffer();
+    myPeerConnection.setLocalDescription(offer);
+    socket.emit("offer", offer, roomName);
+    console.log(offer);  
+})
+
+socket.on("offer", (offer) => {
+    console.log(offer);
 })
 
 //RTC Code
 
 function makeConnection() {
-    const peerConnection = new RTCPeerConnection();
+    myPeerConnection = new RTCPeerConnection();
+    myStream
+        .getTracks()
+        .forEach(track => myPeerConnection.addTrack(track, myStream));    
 }
